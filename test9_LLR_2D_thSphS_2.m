@@ -119,9 +119,45 @@ slr_Z = [3,-2, 1; 1, 2, 3;3,1, 2;2,-1, 3;3,1, 2;2,-1, 3;3,-2, 1;1, 2, 3];
 slr_idx = [slr_X;slr_Y;slr_Z];
 
 delta = pi/10;
-LLR_2D = zeros(21,11);
-for id_u = -10:10
-    for id_v = 0:10  
+% for id_u = -10:10
+%     for id_v = 0:10  
+
+        % id_u = -5;
+        % id_v = 0;
+        % do_shift=1,  SNR FD  =NaN
+        % do_shift=1, LLR TD =NaN
+
+
+        % id_u = 5;
+        % id_v = 0;
+        % do_shift=1,  SNR FD  =NaN
+        % do_shift=1, LLR TD =NaN
+
+        % id_u = -5;
+        % id_v = 10;
+        % do_shift=1,  SNR FD  =NaN
+        % do_shift=1, LLR TD =NaN
+
+
+        id_u = 5;
+        id_v = 10;
+        % do_shift=1,  SNR FD  =NaN
+        % do_shift=1, LLR TD =NaN
+        % innerprod_hh_A_FD  =NaN
+        % innerprod_hh_E_FD  =NaN
+        % A(4194265) =NaN
+        % E(4194265) =NaN
+        % X(4194265) =-4.7663e-38
+        % Y(4194265) =NaN
+        % Z(4194265) =NaN
+        % id_anomay = any(isnan(A));  %1
+        % id_anomay = any(isinf(A));  %0
+        % id_anomay = any(isnan(E));  %1
+        % id_anomay = any(isinf(E));  %0
+        % id_anomay = find(A==nan);
+        % id_anomay = sum(A==nan);  %0
+        % id_anomay = sum(isnan(A)); %1
+        
 
         fprintf("---%d---%d\n",id_u,id_v);
  
@@ -182,58 +218,30 @@ for id_u = -10:10
         time = toc;
         fprintf("total XYZ cost = %f sec\n",time);
     
-
-        % ==========================%
-        % 2026/04/25  tracing the LLR NAN anomaly in (thS,phS) plane
-        % The TDI delay is implemented by interpolation, where the anomaly
-        % value e.g., nan may occur in the start or end transient in the
-        % TDI X/Y/Z, so we need to remove them by hand
-        % ==========================%
-        % remove spikes in start/end transient from TDI interopolation
-        kR_0  = max([kR(1,1),kR(2,1),kR(3,1)]);
-        kR_pl = max([kR(1,sz_t),kR(2,sz_t),kR(3,sz_t)]);
-        id_cbl = ceil(kR_0/15);
-        id_cbr = ceil(kR_pl/15);
-        fprintf("id_cbl=%d    id_cbr=%d\n",id_cbl,id_cbr);
-        
-        % 2022/11/26 removing/zero spikes in start transient (out of range for interp)
-        if  kR_0 > 0
-            % 3 is for 0*Lt,1*Lt,2*Lt,3*Lt, Lt
-            % the spike locate ~id_cbl \sim 3
-            X(1:id_cbl+3) = 0.0;
-            Y(1:id_cbl+3) = 0.0;
-            Z(1:id_cbl+3) = 0.0; 
-        else  %kR<0
-            % the spike locate ~ [1,2,3]
-            X(1:3) = 0.0;
-            Y(1:3) = 0.0;
-            Z(1:3) = 0.0;    
-        end
-        
-        % 2022/11/26 removing/zero spikes in end transient (out of range for interp)
-        if  kR_pl < 0
-            % the spikes in end transient locate on the left of plunge with
-            % |id_cbr|.
-            X(sz_t+id_cbr-3:end) = 0.0;  % -3 in matlab, -4 in c
-            Y(sz_t+id_cbr-3:end) = 0.0;
-            Z(sz_t+id_cbr-3:end) = 0.0;    
-        else
-            fprintf("as kR_pl>0,  t_delay = t-kR-Lt   is always satisfied");
-            X(sz_t-2:end) = 0.0;
-            Y(sz_t-2:end) = 0.0;
-            Z(sz_t-2:end) = 0.0;   
-        end
-        % ==========================%
-
-        if do_shift == 1
-            X = circshift(X,-41);
-            Y = circshift(Y,-41);
-            Z = circshift(Z,-41);
-        end
-    
+        % if do_shift == 1
+        %     X = circshift(X,-41);
+        %     Y = circshift(Y,-41);
+        %     Z = circshift(Z,-41);
+        % end
     
         %% LLR
         [A,E,~] = AET(X(1:N_fft),Y(1:N_fft),Z(1:N_fft));
+
+        % -----------------------------------%
+        % 2026/04/25  tracing the LLR NAN anomaly in (thS,phS) plane
+        id_anomay = isnan(A);find(id_anomay==1)  %1
+        id_anomay = isnan(E);find(id_anomay==1)  %1
+
+        id_anomay = isnan(Z);find(id_anomay==1)  %1
+        id_anomay = isnan(Y);find(id_anomay==1)  %1
+        id_anomay = isnan(X);find(id_anomay==1)  %0
+        fprintf("A(1)=%e\n",A(1));
+        fprintf("E(1)=%e\n",E(1));
+        fprintf("X(1)=%e\n",X(1));
+        fprintf("Y(1)=%e\n",Y(1));
+        fprintf("Z(1)=%e\n",Z(1));
+        % -----------------------------------%
+
         Af  = fft(A)*dt;   Ef = fft(E)*dt; 
         innerprod_hh_A_FD = innerproduct_fre_2(Af,Af,Sae2,df,id_cut);
         innerprod_hh_E_FD = innerproduct_fre_2(Ef,Ef,Sae2,df,id_cut);
@@ -245,28 +253,4 @@ for id_u = -10:10
         LLR2_TD =  (innerprod_dh_A_TD+innerprod_dh_A_TD)^2/(innerprod_hh_A_FD+innerprod_hh_A_FD);
         fprintf("do_shift=%d, LLR TD =%f\n",do_shift, sqrt(LLR2_TD));
 
-        LLR_2D(id_u+11,id_v+1) = sqrt(LLR2_TD);
-    end
-end
-
-%% 2D LLR landscape
-% theta_s                 =0.498944489240392;
-% phi_s                   =2.232796975920000;
-thS = (0:10)*delta;
-phS = (-10:10)*delta;
-[thS_2D,phS_2D] = meshgrid(thS,phS);
-save('./Results/LLR_2D_thSphS.mat','LLR_2D','thS_2D','phS_2D');
-figure(1)
-pcolor(thS_2D,phS_2D,LLR_2D)
-shading interp
-set(gca,'fontsize',20);
-c = colorbar;
-c.Label.String = 'LLR';
-c.Label.FontSize = 20;
-xlabel('$\theta_s$','Interpreter', 'latex')
-ylabel('$\phi_s$','Interpreter', 'latex')
-screenSize = get(0, 'ScreenSize'); % Get screen resolution [1,4](@ref)  
-set(gcf, 'OuterPosition', screenSize); % Cover entire screen  
-sgt = sgtitle('Test 2D subspace ($\theta_s,\phi_s$), 2026/04/23','Color','k','FontSize',30,'Interpreter', 'latex');
-saveas(gcf,'./Figures/test9_2D_landscape_thSphS.png')
-
+        LLR_2D = sqrt(LLR2_TD);
