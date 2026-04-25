@@ -1,13 +1,11 @@
-# 2022/11/17
-the TDI interp produce spikes, the shift 41 is to remove spikes in start transient, need to zero the spikes in end transient.
+# 2026/04/25
 
+The LDC-1.2 signal and data can be downloaded from https://lisa-ldc.in2p3.fr/challenge1a 
 
-# 2022/08
-this directory test spikes in XYZ (XYZ shift by 615 sec) and it's influence on snr and loglike. 
-#
-# there is no spike from td and fd shift, but 20220506 wh1 bestfit do have spike from shift.
-# why I can't reproduce it?   check again.  20220820 
-# (the spikes are from start/end transient resulting from TDI interp. The spikes in the end transient are delayed from plunge by TDI delay.)
-#
-When the ode evolve close to plunge, the td and fd  shift produce spikes in start and end transient.
-
+% t, h+, hx
+%hphcData
+hphcData =  h5read('./LDC1-2_EMRI_v2_noiseless.hdf5','/H5LISA/GWSources/EMRI-0/hphcData');
+% 't, value'
+%TDIdata
+% TDIdata  =  h5read('./LDC1-2_EMRI_v2_noiseless.hdf5','/H5LISA/PreProcess/TDIdata');
+% TDIdata  =  h5read('./LDC1-2_EMRI_v2.hdf5','/H5LISA/PreProcess/TDIdata');
